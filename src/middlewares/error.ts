@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 
 import { StatusCodes } from '../constants';
 
-const errorMiddleware = (
+export const errorMiddleware = (
   err: { statusCode: number } & Error,
   req: Request,
   res: Response,
@@ -20,5 +20,3 @@ const errorMiddleware = (
 
   next();
 };
-
-export default errorMiddleware;

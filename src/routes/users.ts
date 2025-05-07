@@ -1,7 +1,12 @@
 import { Router } from 'express';
 
 import {
-  createUser,
+  validateAvatarUpdate,
+  validateUserId,
+  validateUserUpdate,
+} from '../constants/request-validators';
+import {
+  getCurrentUser,
   getUserById,
   getUsers,
   updateUserAvatar,
@@ -11,9 +16,9 @@ import {
 const router = Router();
 
 router.get('/', getUsers);
-router.get('/:id', getUserById);
-router.post('/', createUser);
-router.patch('/me', updateUserInfo);
-router.patch('/me/avatar', updateUserAvatar);
+router.get('/me', getCurrentUser);
+router.get('/:id', validateUserId, getUserById);
+router.patch('/me', validateUserUpdate, updateUserInfo);
+router.patch('/me/avatar', validateAvatarUpdate, updateUserAvatar);
 
 export default router;

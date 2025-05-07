@@ -1,8 +1,9 @@
+import { isCelebrateError } from 'celebrate';
 import { NextFunction, Request, Response } from 'express';
 import { Error as MongooseError } from 'mongoose';
 
 import { StatusCodes } from '../constants';
-import { NotFoundError, ValidationError } from '../errors';
+import { ForbiddenError, NotFoundError, ValidationError } from '../errors';
 import Card, { type Card as TCard } from '../models/card';
 import { AuthContext } from '../types/types';
 
@@ -22,7 +23,7 @@ export async function createCard(
     });
     res.status(StatusCodes.CREATED).send(card);
   } catch (err) {
-    if (err instanceof MongooseError.ValidationError) {
+    if (isCelebrateError(err) || err instanceof MongooseError.ValidationError) {
       next(new ValidationError('Переданы некорректные данные'));
     } else {
       next(err);
@@ -36,12 +37,16 @@ export async function deleteCard(
   next: NextFunction,
 ) {
   try {
-    const card = await Card.findByIdAndDelete(req.params.id);
+    const userId = res.locals.user._id;
+    const card = await Card.findById(req.params.id);
 
     if (!card) {
       throw new NotFoundError('Карточка не найдена');
+    } else if (card.owner.toString() !== userId) {
+      throw new ForbiddenError('Доступ к операции запрещён');
     }
 
+    await Card.findByIdAndDelete(req.params.id);
     res.status(StatusCodes.OK).send(card);
   } catch (err) {
     next(err);

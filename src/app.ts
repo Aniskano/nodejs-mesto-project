@@ -1,10 +1,18 @@
+import { errors } from 'celebrate';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
 
+import { validateCreateUser, validateLogin } from './constants';
+import { createUser, login } from './controllers/users';
 import { NotFoundError } from './errors';
-import addUserIdMiddleware from './middlewares/add-user-id';
-import errorMiddleware from './middlewares/error';
+import {
+  authMiddleware,
+  errorLogger,
+  errorMiddleware,
+  requestLogger,
+} from './middlewares';
 import cardsRouter from './routes/cards';
 import usersRouter from './routes/users';
 
@@ -19,6 +27,7 @@ const {
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 mongoose
@@ -26,10 +35,18 @@ mongoose
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-app.use(addUserIdMiddleware);
+app.use(requestLogger);
+
+app.post('/signin', validateLogin, login);
+app.post('/signup', validateCreateUser, createUser);
+
+app.use(authMiddleware);
 
 app.use('/users', usersRouter);
 app.use('/cards', cardsRouter);
+
+app.use(errorLogger);
+app.use(errors());
 
 app.all(/^\//, (req, res, next) => {
   next(new NotFoundError('Маршрут не найден'));
