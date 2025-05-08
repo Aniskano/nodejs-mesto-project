@@ -2,6 +2,7 @@ import { errors } from 'celebrate';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import express from 'express';
+import helmet from 'helmet';
 import mongoose from 'mongoose';
 
 import { validateCreateUser, validateLogin } from './constants';
@@ -26,6 +27,7 @@ const {
 
 const app = express();
 
+app.use(helmet.crossOriginResourcePolicy());
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -45,13 +47,12 @@ app.use(authMiddleware);
 app.use('/users', usersRouter);
 app.use('/cards', cardsRouter);
 
-app.use(errorLogger);
-app.use(errors());
-
 app.all(/^\//, (req, res, next) => {
   next(new NotFoundError('Маршрут не найден'));
 });
 
+app.use(errorLogger);
+app.use(errors());
 app.use(errorMiddleware);
 
 app.listen(PORT, () => {

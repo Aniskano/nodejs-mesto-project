@@ -30,8 +30,9 @@ export async function createUser(
       name: req.body.name,
     };
     const passwordHash = await hash(req.body.password, 10);
-    const { _id: id } = await User.create({ ...data, password: passwordHash });
-    const user = await User.findById(id).select('-password');
+    const userDoc = await User.create({ ...data, password: passwordHash });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...user } = userDoc.toObject();
     res.status(StatusCodes.CREATED).send(user);
   } catch (err) {
     if (err instanceof MongooseError.ValidationError) {
